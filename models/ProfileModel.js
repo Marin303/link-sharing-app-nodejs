@@ -14,10 +14,6 @@ const profileSchema = mongoose.Schema(
       type: String,
       required: [true, "Please enter an email"],
     },
-    image: {
-      type: String,
-      required: false,
-    },
   },
   {
     timestamps: true,

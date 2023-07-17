@@ -17,3 +17,7 @@ npm i mongoose
 ```
 npm i dotenv
 ```
+
+```
+npm install cors
+```
