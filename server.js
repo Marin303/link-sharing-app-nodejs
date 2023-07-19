@@ -1,10 +1,10 @@
 const express = require("express");
-const mongoose = require("mongoose");
-const Profile = require("./models/ProfileModel");
+const multer = require("multer");
 require("dotenv").config();
 const app = express();
 const port = 5000;
-const multer = require("multer");
+
+app.use("/uploads", express.static("uploads"));
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -27,11 +27,7 @@ const cors = require("cors");
 app.use(cors());
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
-});
-
-app.get("/preview", (req, res) => {
-  res.send("Hello preview");
+  res.status(200).json(profile);
 });
 
 app.post("/", upload.single("image"), async (req, res) => {
@@ -39,14 +35,14 @@ app.post("/", upload.single("image"), async (req, res) => {
     const { firstName, lastName, email } = req.body;
     const image = req.file.filename;
 
-    const profile = await Profile.create({
+    const profile = {
       firstName,
       lastName,
       email,
       image,
-    });
+    };
 
-    console.log(req.body);
+    console.log(profile);
     res.status(200).json(profile);
   } catch (error) {
     console.log(error.message);
@@ -54,18 +50,6 @@ app.post("/", upload.single("image"), async (req, res) => {
   }
 });
 
-const password = process.env.URI_PASSWORD;
-const uri = `mongodb+srv://Marin03:${password}@cluster0.ujwxme5.mongodb.net/Node-API?retryWrites=true&w=majority`;
-
-mongoose
-  .connect(uri)
-  .then(() => {
-    console.log("Connected to Mongo");
-
-    app.listen(port, () => {
-      console.log(`Example app listening on port ${port}`);
-    });
-  })
-  .catch((error) => {
-    console.log(error);
-  });
+app.listen(port, () => {
+  console.log(`Example app listening on port ${port}`);
+});
