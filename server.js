@@ -30,25 +30,35 @@ app.get("/", (req, res) => {
   res.status(200).json(profile);
 });
 
-app.post("/", upload.single("image"), async (req, res) => {
-  try {
-    const { firstName, lastName, email } = req.body;
-    const image = req.file.filename;
+app.post("/", upload.single("image"), (req, res) => {
+  if (!req.file) {
+    console.log("No file received");
+    return res.send({
+      success: false
+    });
+  } else {
+    try {
+      const profileData = JSON.parse(req.body.profileData);
+      const parsedForms = JSON.parse(req.body.forms);
+      const image = req.file.filename;
 
-    const profile = {
-      firstName,
-      lastName,
-      email,
-      image,
-    };
+      const completeProfileData = {
+        ...profileData,
+        image,
+        forms: parsedForms
+      };
 
-    console.log(profile);
-    res.status(200).json(profile);
-  } catch (error) {
-    console.log(error.message);
-    res.status(500).json({ message: "Internal server error" });
+      console.log(completeProfileData);
+      res.status(200).json(completeProfileData);
+    } catch (error) {
+      console.log(error.message);
+      res.status(500).json({ message: "Internal server error" });
+    }
   }
 });
+
+
+
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
