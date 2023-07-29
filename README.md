@@ -21,3 +21,11 @@ npm i dotenv
 ```
 npm install cors
 ```
+
+```
+npm install uuidv4
+```
+
+```
+npm install mongodb
+```
