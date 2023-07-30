@@ -1,50 +1,30 @@
 const express = require("express");
 const multer = require("multer");
-const multerS3 = require("multer-s3");
-const aws = require('aws-sdk');
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const { v4: uuidv4 } = require("uuid");
-const helmet = require('helmet');
+const cors = require("cors");
+const fs = require('fs');
+const MongoClient = require("mongodb").MongoClient;
+
+/* multer here for handle multipart/form-data*/
+
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
 }
-const cors = require("cors");
-
-const MongoClient = require("mongodb").MongoClient;
 
 const app = express();
 const port = process.env.PORT || 5000;
 
-app.use(helmet.contentSecurityPolicy({
-  directives: {
-    defaultSrc: ["'self'"],
-    imgSrc: ["'self'", 'data:', '*'],
-  },
-}));
-
 app.use(express.json());
 app.use(cors());
 
-aws.config.update({
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  region: process.env.AWS_REGION 
+const s3 = new S3Client
+({ 
+  region: 
+  process.env.AWS_REGION 
 });
 
-const s3 = new aws.S3();
-
-const upload = multer({
-  storage: multerS3({
-    s3: s3,
-    bucket: process.env.AWS_S3_BUCKET,
-    key: function (req, file, cb) {
-      const uniqueSuffix = Math.round(Math.random() * 1e5);
-      cb(
-        null,
-        file.fieldname + "-" + uniqueSuffix + "." + file.mimetype.split("/")[1]
-      );
-    }
-  })
-});
+const upload = multer({ dest: 'uploads/' });
 
 const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri);
@@ -76,7 +56,20 @@ async function run() {
         try {
           const profileData = JSON.parse(req.body.profileData);
           const parsedForms = JSON.parse(req.body.forms);
-          const image = req.file.location;
+
+          const fileContent = fs.readFileSync(req.file.path);
+
+          const uploadParams = {
+            Bucket: process.env.AWS_S3_BUCKET,
+            Key: req.file.originalname,
+            Body: fileContent,
+          };
+
+          await s3.send(new PutObjectCommand(uploadParams));
+
+          const image = `https://${process.env.AWS_S3_BUCKET}.s3.amazonaws.com/${req.file.originalname}`;
+
+          fs.unlinkSync(req.file.path);
 
           const id = uuidv4(); // generate a unique ID
 
