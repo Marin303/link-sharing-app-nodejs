@@ -16,7 +16,13 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(express.json());
-app.use(cors());
+
+const corsOptions = {
+  origin: process.env.NETLIFY_URL,
+  optionsSuccessStatus: 200 
+}
+
+app.use(cors(corsOptions));
 
 const s3 = new S3Client
 ({ 
