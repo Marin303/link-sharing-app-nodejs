@@ -1,5 +1,7 @@
 const express = require("express");
 const multer = require("multer");
+const multerS3 = require("multer-s3");
+const aws = require('aws-sdk');
 const { v4: uuidv4 } = require("uuid");
 const helmet = require('helmet');
 if (process.env.NODE_ENV !== 'production') {
@@ -19,24 +21,30 @@ app.use(helmet.contentSecurityPolicy({
   },
 }));
 
-app.use("/uploads", express.static("uploads"));
 app.use(express.json());
 app.use(cors());
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Math.round(Math.random() * 1e5);
-    cb(
-      null,
-      file.fieldname + "-" + uniqueSuffix + "." + file.mimetype.split("/")[1]
-    );
-  },
+aws.config.update({
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  region: process.env.AWS_REGION 
 });
 
-const upload = multer({ storage: storage });
+const s3 = new aws.S3();
+
+const upload = multer({
+  storage: multerS3({
+    s3: s3,
+    bucket: process.env.AWS_S3_BUCKET,
+    key: function (req, file, cb) {
+      const uniqueSuffix = Math.round(Math.random() * 1e5);
+      cb(
+        null,
+        file.fieldname + "-" + uniqueSuffix + "." + file.mimetype.split("/")[1]
+      );
+    }
+  })
+});
 
 const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri);
@@ -68,7 +76,7 @@ async function run() {
         try {
           const profileData = JSON.parse(req.body.profileData);
           const parsedForms = JSON.parse(req.body.forms);
-          const image = req.file.filename;
+          const image = req.file.location;
 
           const id = uuidv4(); // generate a unique ID
 
