@@ -6,7 +6,7 @@ const cors = require("cors");
 const MongoClient = require("mongodb").MongoClient;
 
 const app = express();
-const port = 5000;
+const port = process.env.PORT || 5000;
 
 app.use("/uploads", express.static("uploads"));
 app.use(express.json());
@@ -27,7 +27,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-const uri = `mongodb+srv://Marin03:${process.env.MONGO_DB}@cluster0.ujwxme5.mongodb.net/?retryWrites=true&w=majority`;
+const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri);
 
 async function run() {
