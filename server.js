@@ -1,6 +1,7 @@
 const express = require("express");
 const multer = require("multer");
 const { v4: uuidv4 } = require("uuid");
+const helmet = require('helmet');
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
 }
@@ -10,6 +11,13 @@ const MongoClient = require("mongodb").MongoClient;
 
 const app = express();
 const port = process.env.PORT || 5000;
+
+app.use(helmet.contentSecurityPolicy({
+  directives: {
+    defaultSrc: ["'self'"],
+    imgSrc: ["'self'", 'data:'],
+  },
+}));
 
 app.use("/uploads", express.static("uploads"));
 app.use(express.json());
